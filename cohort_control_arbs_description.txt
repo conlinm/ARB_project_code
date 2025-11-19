@@ -1,0 +1,89 @@
+Control for ARBs Study Cohort
+ARBs Study Cohort
+Tags
+Prod_Group: Conlin
+Cohort Entry Events
+People with continuous observation of 365 days before event may enter the cohort when observing any of the following:
+
+drug eras of 'Non_ARB_antihypertensive', with era length > 60 days.
+Limit cohort entry events to the earliest event per person.
+
+Inclusion Criteria
+1. Age > 18
+Entry events with the following event criteria: who are > 18 years old.
+
+2. No prior RCCa
+Entry events having no condition occurrences of 'renal cell carcinoma'.
+
+3. No familial/genetic risk of Rcca
+Entry events having no condition occurrences of 'GeneticHereditaryRCCa'.
+
+4. No ESRD
+Entry events having no condition occurrences of 'ESRD_ARBstudy', starting anytime on or before cohort entry start date.
+
+5. No Transplant
+Entry events having no condition occurrences of 'Transplant_status_ARBstudy', starting anytime on or before cohort entry start date.
+
+6. No ARB use
+Entry events having no drug exposures of 'ARBs'.
+
+Cohort Exit
+The person exits the cohort at the end of continuous observation. The person exits the cohort when encountering any of the following events:
+
+condition occurrences of 'renal cell carcinoma'.
+death of any form.
+Cohort Eras
+Remaining events will be combined into cohort eras if they are within 0 days of each other.
+
+
+Appendix 1: Concept Set Definitions
+
+ARBs
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+1308842	valsartan	Drug	RxNorm	NO	YES	NO
+1317640	telmisartan	Drug	RxNorm	NO	YES	NO
+1346686	eprosartan	Drug	RxNorm	NO	YES	NO
+1347384	irbesartan	Drug	RxNorm	NO	YES	NO
+1351557	candesartan	Drug	RxNorm	NO	YES	NO
+1367500	losartan	Drug	RxNorm	NO	YES	NO
+40226742	olmesartan	Drug	RxNorm	NO	YES	NO
+40235485	azilsartan	Drug	RxNorm	NO	YES	NO
+
+ESRD_ARBstudy
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+37395652	Anemia in chronic kidney disease stage 5	Condition	SNOMED	NO	YES	NO
+443611	Chronic kidney disease stage 5	Condition	SNOMED	NO	YES	NO
+193782	End-stage renal disease	Condition	SNOMED	NO	YES	NO
+
+GeneticHereditaryRCCa
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+4263213	Von Hippel-Lindau syndrome	Condition	SNOMED	NO	YES	NO
+380839	Tuberous sclerosis syndrome	Condition	SNOMED	NO	YES	NO
+37399456	Hereditary papillary renal cell carcinoma	Condition	SNOMED	NO	NO	NO
+37160584	Hereditary leiomyomatosis and renal cell carcinoma	Condition	SNOMED	NO	NO	NO
+4110719	Fibrofolliculoma	Condition	SNOMED	NO	YES	NO
+35622838	BAP1 tumor predisposition syndrome	Condition	SNOMED	NO	NO	NO
+4240212	Cowden syndrome	Condition	SNOMED	NO	NO	NO
+37396489	Lynch syndrome	Condition	SNOMED	NO	NO	NO
+
+Hypertension_ARBstudy
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+316866	Hypertensive disorder	Condition	SNOMED	NO	YES	NO
+
+Non_ARB_antihypertensive
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+21601783	ACE INHIBITORS, PLAIN	Drug	ATC	NO	YES	NO
+21601801	ACE INHIBITORS, COMBINATIONS	Drug	ATC	NO	YES	NO
+21601744	CALCIUM CHANNEL BLOCKERS	Drug	ATC	NO	YES	NO
+21601461	DIURETICS	Drug	ATC	NO	YES	NO
+21601665	BETA BLOCKING AGENTS	Drug	ATC	NO	YES	NO
+
+renal cell carcinoma
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+45765451	Renal cell carcinoma	Condition	SNOMED	NO	YES	NO
+45773365	Metastatic renal cell carcinoma	Condition	SNOMED	NO	YES	NO
+37116954	Clear cell papillary renal cell carcinoma	Condition	SNOMED	NO	YES	NO
+
+Transplant_status_ARBstudy
+Concept Id	Concept Name	Domain	Vocabulary	Excluded	Descendants	Mapped
+42537741	Transplant present	Observation	SNOMED	NO	YES	NO
