@@ -1,11 +1,11 @@
--- Set the vocabulary and cdm database schema names (Note, this will not work correctly in the VA, as the table names are Src.OMOPV5_ etc, there is no period. This could be removed during the query using dynamic querying, but that can be slow. See the VA version of this file for details)
-DECLARE @vocabulary_database_schema SYSNAME = 'SRC.OMOPv5_';
-DECLARE @cdm_database_schema SYSNAME = 'SRC.OMOPv5_';
-DECLARE @target_database_schema SYSNAME = 'SRC.OMOPv5_';
-DECLARE @target_cohort_table SYSNAME = 'SRC.OMOPv5_';
-
-
-
+-- Set the vocabulary and cdm database schema names
+-- DECLARE @vocabulary_database_schema SYSNAME = 'SRC.OMOPV5_';
+-- DECLARE @cdm_database_schema SYSNAME = 'SRC.OMOPV5_';
+DECLARE @target_database_schema SYSNAME = 'Dflt.';
+DECLARE @target_cohort_table SYSNAME = 'MJC_arb_cohort';
+DECLARE @target_cohort_id INT = 1;
+--cohort id 1: ARB users with no prior RCCa, CKD, transplant, or genetic risk
+-- cohort id 2: control cohort defined in different script
 
 
 
@@ -27,115 +27,120 @@ In each of these code blocks, there is an inner query (I) that gets the specifie
 */
 INSERT INTO #Codesets
     (codeset_id, concept_id)
-SELECT 0 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (1308842,1317640,1346686,1347384,1351557,1367500,40226742,40235485)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+    SELECT 0 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (1308842,1317640,1346686,1347384,1351557,1367500,40226742,40235485)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (1308842,1317640,1346686,1347384,1351557,1367500,40226742,40235485)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
-) C UNION ALL
---- RCCa
-SELECT 2 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (45765451,45773365,37116954)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+) C
+UNION ALL
+    --- RCCa
+    SELECT 2 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (45765451,45773365,37116954)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (45765451,45773365,37116954)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
-) C UNION ALL
---- Genetic Risk of RCCa
-SELECT 3 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (4263213,380839,37399456,37160584,4110719,35622838,4240212,37396489)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+) C
+UNION ALL
+    --- Genetic Risk of RCCa
+    SELECT 3 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (4263213,380839,37399456,37160584,4110719,35622838,4240212,37396489)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (4263213,380839,4110719)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
-) C UNION ALL
---- Chronic Kidney Disease/ESRD
-SELECT 4 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (37395652,443611,193782)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+) C
+UNION ALL
+    --- Chronic Kidney Disease/ESRD
+    SELECT 4 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (37395652,443611,193782)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (37395652,443611,193782)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
-) C UNION ALL
---- Transplant History
-SELECT 5 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (42537741)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+) C
+UNION ALL
+    --- Transplant History
+    SELECT 5 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (42537741)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (42537741)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
-) C UNION ALL
-SELECT 6 as codeset_id, c.concept_id
-FROM (select distinct I.concept_id
-    FROM
-        ( 
-              select concept_id
-            from @vocabulary_database_schema.CONCEPT
-            where concept_id in (316866)
-        UNION
-            select c.concept_id
-            from @vocabulary_database_schema.CONCEPT c
-        join @vocabulary_database_schema.CONCEPT_ANCESTOR  ca on c
+) C
+UNION ALL
+    SELECT 6 as codeset_id, c.concept_id
+    FROM (select distinct I.concept_id
+        FROM
+            ( 
+                                          select concept_id
+                from Src.OMOPV5_CONCEPT
+                where concept_id in (316866)
+            UNION
+                select c.concept_id
+                from Src.OMOPV5_CONCEPT c
+                    join Src.OMOPV5_CONCEPT_ANCESTOR   ca on c
 .concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in
+                        and ca.ancestor_concept_id in
 (316866)
-  and c.invalid_reason is null
+                        and c.invalid_reason is null
 
 ) I
 ) C;
@@ -165,23 +170,23 @@ select C.person_id, C.drug_era_id as event_id, C.start_date, C.end_date,
                 from
                     (
   select de.person_id, de.drug_era_id, de.drug_concept_id, de.drug_exposure_count, de.gap_days, de.drug_era_start_date as start_date, de.drug_era_end_date as end_date
-                    FROM @cdm_database_schema.DRUG_ERA de
-                where de.drug_concept_id in (SELECT concept_id
-                from #Codesets
-                where codeset_id = 0)
+                    FROM Src.OMOPV5_DRUG_ERA de
+                    where de.drug_concept_id in (SELECT concept_id
+                    from #Codesets
+                    where codeset_id = 0)
 ) C
 
-            WHERE DATEDIFF(d,C.start_date, C.end_date) > 60 -- minimum era duration of 60 days
+                WHERE DATEDIFF(d,C.start_date, C.end_date) > 60 -- minimum era duration of 60 days
 -- End Drug Era Criteria
 
   ) E
-            JOIN @cdm_database_schema.observation_period  OP on E.person_id
+                JOIN Src.OMOPV5_observation_period   OP on E.person_id
 = OP.person_id and E.start_date >=  OP.observation_period_start_date and E.start_date <= op.observation_period_end_date
-  WHERE DATEADD
+            WHERE DATEADD
 (day,365,OP.OBSERVATION_PERIOD_START_DATE) <= E.START_DATE AND DATEADD
 (day,0,E.START_DATE) <= OP.OBSERVATION_PERIOD_END_DATE -- ensure at least 1 year of observation prior to event
 ) P
-WHERE P.ordinal = 1
+        WHERE P.ordinal = 1
 -- End Primary Events
 ) pe
   
@@ -210,14 +215,14 @@ select 0 as index_id, person_id, event_id
     -- Begin Demographic Criteria
 SELECT 0 as index_id, e.person_id, e.event_id
                 FROM #qualified_events E
-                    JOIN @cdm_database_schema.PERSON  P ON P .PERSON_ID = E.PERSON_ID
-            WHERE YEAR(E.start_date) - P.year_of_birth > 18
-            GROUP BY e.person_id, e.event_id
+                    JOIN Src.OMOPV5_PERSON   P ON P  .PERSON_ID = E.PERSON_ID
+                WHERE YEAR(E.start_date) - P.year_of_birth > 18
+                GROUP BY e.person_id, e.event_id
 -- End Demographic Criteria
 
-  ) CQ on E .person_id = CQ.person_id and E.event_id = CQ.event_id
-    GROUP BY E.person_id, E.event_id
-    HAVING COUNT(index_id) = 1
+  ) CQ on E  .person_id = CQ.person_id and E.event_id = CQ.event_id
+            GROUP BY E.person_id, E.event_id
+            HAVING COUNT(index_id) = 1
 ) G
 -- End Criteria Group
 ) AC on AC.person_id = pe.person_id AND AC.event_id = pe.event_id
@@ -253,21 +258,21 @@ SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_d
                         FROM
                             (
   SELECT co.person_id, co.condition_occurrence_id, co.condition_concept_id, co.visit_occurrence_id, co.condition_start_date as start_date, COALESCE(co.condition_end_date, DATEADD(day,1,co.condition_start_date)) as end_date
-                            FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-                            JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 2)
-) C 
+                            FROM Src.OMOPV5_CONDITION_OCCURRENCE co
+                                JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 2)
+) C  
 
 
 -- End Condition Occurrence Criteria
 
 ) A on A.person_id = P.person_id AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE ) cc on p.person_id = cc.person_id and p.event_id = cc.event_id
-            GROUP BY p.person_id, p.event_id
-            HAVING COUNT(cc.event_id) = 0
+                GROUP BY p.person_id, p.event_id
+                HAVING COUNT(cc.event_id) = 0
 -- End Correlated Criteria
 
-  ) CQ on E .person_id = CQ.person_id and E.event_id = CQ.event_id
-    GROUP BY E.person_id, E.event_id
-    HAVING COUNT(index_id) = 1
+  ) CQ on E  .person_id = CQ.person_id and E.event_id = CQ.event_id
+            GROUP BY E.person_id, E.event_id
+            HAVING COUNT(index_id) = 1
 ) G
 -- End Criteria Group
 ) AC on AC.person_id = pe.person_id AND AC.event_id = pe.event_id
@@ -303,21 +308,21 @@ SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_d
                         FROM
                             (
   SELECT co.person_id, co.condition_occurrence_id, co.condition_concept_id, co.visit_occurrence_id, co.condition_start_date as start_date, COALESCE(co.condition_end_date, DATEADD(day,1,co.condition_start_date)) as end_date
-                            FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-                            JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 3)
-) C 
+                            FROM Src.OMOPV5_CONDITION_OCCURRENCE co
+                                JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 3)
+) C  
 
 
 -- End Condition Occurrence Criteria
 
 ) A on A.person_id = P.person_id AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE ) cc on p.person_id = cc.person_id and p.event_id = cc.event_id
-            GROUP BY p.person_id, p.event_id
-            HAVING COUNT(cc.event_id) = 0
+                GROUP BY p.person_id, p.event_id
+                HAVING COUNT(cc.event_id) = 0
 -- End Correlated Criteria
 
-  ) CQ on E .person_id = CQ.person_id and E.event_id = CQ.event_id
-    GROUP BY E.person_id, E.event_id
-    HAVING COUNT(index_id) = 1
+  ) CQ on E  .person_id = CQ.person_id and E.event_id = CQ.event_id
+            GROUP BY E.person_id, E.event_id
+            HAVING COUNT(index_id) = 1
 ) G
 -- End Criteria Group
 ) AC on AC.person_id = pe.person_id AND AC.event_id = pe.event_id
@@ -353,21 +358,21 @@ SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_d
                         FROM
                             (
   SELECT co.person_id, co.condition_occurrence_id, co.condition_concept_id, co.visit_occurrence_id, co.condition_start_date as start_date, COALESCE(co.condition_end_date, DATEADD(day,1,co.condition_start_date)) as end_date
-                            FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-                            JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 4)
-) C 
+                            FROM Src.OMOPV5_CONDITION_OCCURRENCE co
+                                JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 4)
+) C  
 
 
 -- End Condition Occurrence Criteria
 
 ) A on A.person_id = P.person_id AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= DATEADD(day,0,P.START_DATE) ) cc on p.person_id = cc.person_id and p.event_id = cc.event_id
-            GROUP BY p.person_id, p.event_id
-            HAVING COUNT(cc.event_id) = 0
+                GROUP BY p.person_id, p.event_id
+                HAVING COUNT(cc.event_id) = 0
 -- End Correlated Criteria
 
-  ) CQ on E .person_id = CQ.person_id and E.event_id = CQ.event_id
-    GROUP BY E.person_id, E.event_id
-    HAVING COUNT(index_id) = 1
+  ) CQ on E  .person_id = CQ.person_id and E.event_id = CQ.event_id
+            GROUP BY E.person_id, E.event_id
+            HAVING COUNT(index_id) = 1
 ) G
 -- End Criteria Group
 ) AC on AC.person_id = pe.person_id AND AC.event_id = pe.event_id
@@ -403,21 +408,21 @@ SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_d
                         FROM
                             (
   SELECT co.person_id, co.condition_occurrence_id, co.condition_concept_id, co.visit_occurrence_id, co.condition_start_date as start_date, COALESCE(co.condition_end_date, DATEADD(day,1,co.condition_start_date)) as end_date
-                            FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-                            JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 5)
-) C 
+                            FROM Src.OMOPV5_CONDITION_OCCURRENCE co
+                                JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 5)
+) C  
 
 
 -- End Condition Occurrence Criteria
 
 ) A on A.person_id = P.person_id AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= P.OP_END_DATE AND A.START_DATE >= P.OP_START_DATE AND A.START_DATE <= DATEADD(day,0,P.START_DATE) ) cc on p.person_id = cc.person_id and p.event_id = cc.event_id
-            GROUP BY p.person_id, p.event_id
-            HAVING COUNT(cc.event_id) = 0
+                GROUP BY p.person_id, p.event_id
+                HAVING COUNT(cc.event_id) = 0
 -- End Correlated Criteria
 
-  ) CQ on E .person_id = CQ.person_id and E.event_id = CQ.event_id
-    GROUP BY E.person_id, E.event_id
-    HAVING COUNT(index_id) = 1
+  ) CQ on E  .person_id = CQ.person_id and E.event_id = CQ.event_id
+            GROUP BY E.person_id, E.event_id
+            HAVING COUNT(index_id) = 1
 ) G
 -- End Criteria Group
 ) AC on AC.person_id = pe.person_id AND AC.event_id = pe.event_id
@@ -426,7 +431,7 @@ SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_d
 
 SELECT inclusion_rule_id, person_id, event_id
 INTO #inclusion_events
-FROM (                    select inclusion_rule_id, person_id, event_id
+FROM (                                                            select inclusion_rule_id, person_id, event_id
         from #Inclusion_0
     UNION ALL
         select inclusion_rule_id, person_id, event_id
@@ -484,61 +489,61 @@ INTO #cohort_rows
 from ( -- first_ends
 	select F.person_id, F.start_date, F.end_date
     FROM (
-	              select I.event_id, I.person_id, I.start_date, CE.end_date, row_number() over (partition by I.person_id, I.event_id order by CE.end_date) as ordinal
-            from #included_events I
-                join ( -- cohort_ends
+	                          select I.event_id, I.person_id, I.start_date, CE.end_date, row_number() over (partition by I.person_id, I.event_id order by CE.end_date) as ordinal
+        from #included_events I
+            join ( -- cohort_ends
 -- cohort exit dates
 -- By default, cohort exit at the event's op end date
-                    select event_id, person_id, op_end_date as end_date
-                    from #included_events
-                UNION ALL
-                    -- Censor Events
-                    select i.event_id, i.person_id, MIN(c.start_date) as end_date
-                    FROM #included_events i
-                        JOIN
-                        (
+                                                                    select event_id, person_id, op_end_date as end_date
+                from #included_events
+            UNION ALL
+                -- Censor Events
+                select i.event_id, i.person_id, MIN(c.start_date) as end_date
+                FROM #included_events i
+                    JOIN
+                    (
 -- Begin Condition Occurrence Criteria
 SELECT C.person_id, C.condition_occurrence_id as event_id, C.start_date, C.end_date,
-                            C.visit_occurrence_id, C.start_date as sort_date
-                        FROM
-                            (
+                        C.visit_occurrence_id, C.start_date as sort_date
+                    FROM
+                        (
   SELECT co.person_id, co.condition_occurrence_id, co.condition_concept_id, co.visit_occurrence_id, co.condition_start_date as start_date, COALESCE(co.condition_end_date, DATEADD(day,1,co.condition_start_date)) as end_date
-                            FROM @cdm_database_schema.CONDITION_OCCURRENCE co
+                        FROM Src.OMOPV5_CONDITION_OCCURRENCE co
                             JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 2)
-) C 
+) C  
 
 
 -- End Condition Occurrence Criteria
 
 ) C on C.person_id = I.person_id and C.start_date >= I.start_date and C.START_DATE <= I.op_end_date
-            GROUP BY i.event_id, i.person_id
+                GROUP BY i.event_id, i.person_id
 
-        UNION ALL
-            select i.event_id, i.person_id, MIN(c.start_date) as end_date
-            FROM #included_events i
-                JOIN
-                (
+            UNION ALL
+                select i.event_id, i.person_id, MIN(c.start_date) as end_date
+                FROM #included_events i
+                    JOIN
+                    (
 -- Begin Death Criteria
 select C.person_id, C.person_id as event_id, C.start_date, c.end_date,
-                    CAST(NULL as bigint) as visit_occurrence_id, C.start_date as sort_date
-                from
-                    (
+                        CAST(NULL as bigint) as visit_occurrence_id, C.start_date as sort_date
+                    from
+                        (
   select d.person_id, d.cause_concept_id, d.death_date as start_date, DATEADD(day,1,d.death_date) as end_date
-                    FROM @cdm_database_schema.DEATH d
+                        FROM Src.OMOPV5_DEATH d
 
-) C 
+) C  
 
 
 -- End Death Criteria
 
 
 ) C on C.person_id = I.person_id and C.start_date >= I.start_date and C.START_DATE <= I.op_end_date
-GROUP BY i.event_id, i.person_id
+                GROUP BY i.event_id, i.person_id
 
 
 ) CE on I.event_id = CE.event_id and I.person_id = CE.person_id and CE.end_date >= I.start_date
 	) F
-	WHERE F.ordinal = 1
+    WHERE F.ordinal = 1
 ) FE;
 
 select person_id, min(start_date) as start_date, end_date
@@ -562,7 +567,7 @@ from ( --cteEnds
         , SUM(event_type) OVER (PARTITION BY person_id ORDER BY event_date, event_type ROWS UNBOUNDED PRECEDING) AS interval_status
             FROM
                 (
-                            SELECT
+                                                                    SELECT
                         person_id
           , start_date AS event_date
           , -1 AS event_type
