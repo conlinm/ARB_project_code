@@ -1,0 +1,1 @@
+This is the code related to a research project looking at the use of ARBs vs other antihypertensive medications and the incidence of RCCa. I am using the OMOP data tables, in the manner of the OHDSI reserach community.
