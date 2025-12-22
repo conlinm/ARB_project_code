@@ -1,3 +1,9 @@
+/*
+Run this cohort SQL script first, as it will create the necessary cohort table to hold the results!!!
+
+Note that this SQL script is adapted for the VA OMOP instance, and differs from the standard OHDSI Atlas-generated cohort SQL script in several ways, including table names and schema names.
+*/
+
 -- Set the vocabulary and cdm database schema names
 -- DECLARE @vocabulary_database_schema SYSNAME = 'SRC.OMOPV5_';
 -- DECLARE @cdm_database_schema SYSNAME = 'SRC.OMOPV5_';
@@ -590,11 +596,24 @@ from ( --cteEnds
 group by person_id, end_date
 ;
 
-DELETE FROM @target_database_schema
-.@target_cohort_table where cohort_definition_id = @target_cohort_id;
-INSERT INTO @target_database_schema
+/* Here I had to deviate from the Atlas script, and created a table in the VA system to hold the cohorts. This is one table that will hold both the ARB and control cohorts, differentiated by cohort_definition_id. */
 
-.@target_cohort_table
+-- first drop the table if it already exists
+DROP TABLE IF EXISTS [Dflt].[MJC_arb_cohort];
+
+CREATE TABLE [Dflt].[MJC_arb_cohort] (
+    cohort_definition_id INT NOT NULL,
+    subject_id BIGINT NOT NULL,
+    cohort_start_date DATE NOT NULL,
+    cohort_end_date DATE NOT NULL
+)
+
+-- DELETE FROM @target_database_schema.@target_cohort_table where cohort_definition_id = @target_cohort_id;
+
+-- INSERT INTO @target_database_schema.@target_cohort_table
+
+
+INSERT INTO Dflt.MJC_arb_cohort
 (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
 select @target_cohort_id as cohort_definition_id, person_id, start_date, end_date
 FROM #final_cohort CO
