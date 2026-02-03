@@ -11,7 +11,7 @@ DECLARE @target_database_schema SYSNAME = 'Dflt.';
 DECLARE @target_cohort_table SYSNAME = 'MJC_arb_cohort';
 DECLARE @target_cohort_id INT = 1;
 --cohort id 1: ARB users with no prior RCCa, CKD, transplant, or genetic risk
--- cohort id 2: control cohort defined in different script
+-- cohort id 0: control cohort defined in different script
 
 
 
