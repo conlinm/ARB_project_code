@@ -129,59 +129,6 @@
       }
     },
     {
-      "id": 2,
-      "name": "renal cell carcinoma",
-      "expression": {
-        "items": [
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Disorder",
-              "CONCEPT_CODE": "702391001",
-              "CONCEPT_ID": 45765451,
-              "CONCEPT_NAME": "Renal cell carcinoma",
-              "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "SNOMED"
-            },
-            "includeDescendants": true
-          },
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Disorder",
-              "CONCEPT_CODE": "702392008",
-              "CONCEPT_ID": 45773365,
-              "CONCEPT_NAME": "Metastatic renal cell carcinoma",
-              "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "SNOMED"
-            },
-            "includeDescendants": true
-          },
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Disorder",
-              "CONCEPT_CODE": "734015000",
-              "CONCEPT_ID": 37116954,
-              "CONCEPT_NAME": "Clear cell papillary renal cell carcinoma",
-              "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "SNOMED"
-            },
-            "includeDescendants": true
-          }
-        ]
-      }
-    },
-    {
       "id": 3,
       "name": "GeneticHereditaryRCCa",
       "expression": {
@@ -485,6 +432,73 @@
           }
         ]
       }
+    },
+    {
+      "id": 8,
+      "name": "renal cell carcinoma",
+      "expression": {
+        "items": [
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "702391001",
+              "CONCEPT_ID": 45765451,
+              "CONCEPT_NAME": "Renal cell carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "702392008",
+              "CONCEPT_ID": 45773365,
+              "CONCEPT_NAME": "Metastatic renal cell carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "734015000",
+              "CONCEPT_ID": 37116954,
+              "CONCEPT_NAME": "Clear cell papillary renal cell carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "93849006",
+              "CONCEPT_ID": 198985,
+              "CONCEPT_NAME": "Primary malignant neoplasm of kidney",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            }
+          }
+        ]
+      }
     }
   ],
   "PrimaryCriteria": {
@@ -538,7 +552,7 @@
           {
             "Criteria": {
               "ConditionOccurrence": {
-                "CodesetId": 2
+                "CodesetId": 8
               }
             },
             "StartWindow": {
@@ -685,9 +699,7 @@
   ],
   "CensoringCriteria": [
     {
-      "ConditionOccurrence": {
-        "CodesetId": 2
-      }
+      "ConditionOccurrence": {}
     },
     {
       "Death": {}
