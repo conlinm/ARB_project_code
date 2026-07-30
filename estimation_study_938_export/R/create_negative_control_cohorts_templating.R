@@ -1,6 +1,10 @@
 # This script creates the negative control cohorts for the ARB study.
 # this one creates the cohorts using the template approach
 
+#######################################
+## Not Currently Using This Approach ##
+#######################################
+
 library(Capr)
 library(CohortGenerator)
 library(DatabaseConnector)
