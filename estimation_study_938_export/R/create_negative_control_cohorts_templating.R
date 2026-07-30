@@ -29,6 +29,7 @@ nc_cohort_defs <- lapply(seq_len(nrow(negativeControls)), function(i) {
 
 # Assemble into a CohortGenerator cohort definition set
 nc_cohort_def_set <- tibble(
-  cohortId   = negativeControls$outcomeId,
+  cohortId = negativeControls$outcomeId,
   cohortName = negativeControls$outcomeName,
-  json       = sapply(nc_cohort_defs, Capr::toJson)
+  json = sapply(nc_cohort_defs, Capr::toJson)
+)

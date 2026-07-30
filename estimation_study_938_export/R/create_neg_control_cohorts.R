@@ -37,7 +37,7 @@ csConjunctivalHyperemia <- cs(377283, name = "Conjunctival Hyperemia")
 
 # Cohort definitions
 # --- mania cohort ---
-outcomeCohortDef <- cohort(
+maniaCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csMania, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -51,7 +51,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- tooth loss cohort ---
-outcomeCohortDef <- cohort(
+toothLossCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csToothLoss, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -65,7 +65,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- frostbite cohort ---
-outcomeCohortDef <- cohort(
+frostbiteCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csFrostbite, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -79,7 +79,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- fear of flying cohort ---
-outcomeCohortDef <- cohort(
+fearOfFlyingCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csFearOfFlying, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -93,7 +93,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- vesicoureteric reflux cohort ---
-outcomeCohortDef <- cohort(
+vesicoureteralRefluxCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csVesicouretericReflux, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -107,7 +107,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- marfan's syndrome cohort ---
-outcomeCohortDef <- cohort(
+marfansCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csMarfans, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -121,7 +121,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- post viral fatigue syndrome cohort ---
-outcomeCohortDef <- cohort(
+postViralFatigueSyndromeCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csPostViralFatigueSyndrome, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -135,7 +135,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- hiccoughs cohort ---
-outcomeCohortDef <- cohort(
+hiccoughsCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csHiccoughs, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -149,7 +149,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- homocystinuria cohort ---
-outcomeCohortDef <- cohort(
+homocystinuriaCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csHomocystinuria, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -163,7 +163,7 @@ outcomeCohortDef <- cohort(
 )
 
 # --- conjunctival hyperemia cohort ---
-outcomeCohortDef <- cohort(
+conjunctivalHyperemiaCohortDef <- cohort(
   entry = entry(
     conditionOccurrence(csConjunctivalHyperemia, firstOccurrence()),
     observationWindow = continuousObservation(priorDays = 0L, postDays = 0L),
@@ -175,3 +175,65 @@ outcomeCohortDef <- cohort(
   ),
   era = era(eraDays = 30L)
 )
+### makeCohortSet function ###
+# Now create the cohort set dataframe (a tibble) containing cohortid, name, sql, and json
+# this tibble will be piped into the CohortGenerator function to create the actual cohorts
+# in our database
+
+### note, there is nowhere you can declare the cohort ids ahead of this step, and makeCohortSet
+# assigns these automatically starting at 1. You can create the tibble by hand. See using-capr.pdf
+
+negControlCohortsToCreate <- do.call(
+  makeCohortSet,
+  c(
+    maniaCohortDef,
+    toothLossCohortDef,
+    frostbiteCohortDef,
+    fearOfFlyingCohortDef,
+    vesicoureteralRefluxCohortDef,
+    marfansCohortDef,
+    postViralFatigueSyndromeCohortDef,
+    hiccoughsCohortDef,
+    homocystinuriaCohortDef,
+    conjunctivalHyperemiaCohortDef
+  )
+) |>
+  VaTools::refactor()
+
+
+### Now correct the cohortIds to account for prior 3 TCO cohorts already created ###
+negControlCohortsToCreate$cohortId <- seq(
+  4,
+  length.out = nrow(negControlCohortsToCreate)
+)
+
+# get the cohort table names
+ccohortTableNames <- CohortGenerator::getCohortTableNames(
+  cohortTable = "cohort"
+)
+### create the cohort tables in the database ###
+# First create the empty cohort tables in the database
+CohortGenerator::createCohortTables(
+  connectionDetails = connectionDetails,
+  cohortDatabaseSchema = cohortDatabaseSchema,
+  cohortTableNames = cohortTableNames
+)
+# generate the cohort and populate the tables in the database
+cohortsGenerated <- CohortGenerator::generateCohortSet(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = cdmDatabaseSchema,
+  cohortDatabaseSchema = cohortDatabaseSchema,
+  cohortTableNames = cohortTableNames,
+  cohortDefinitionSet = negControlCohortsToCreate
+)
+
+cohortCounts <- CohortGenerator::getCohortCounts(
+  connectionDetails = connectionDetails,
+  cohortDatabaseSchema = cohortDatabaseSchema,
+  cohortTable = cohortTableNames$cohortTable
+) |>
+  inner_join(
+    cohortsToCreate |> select(cohortId, cohortName),
+    by = "cohortId"
+  ) |>
+  arrange(cohortId)
