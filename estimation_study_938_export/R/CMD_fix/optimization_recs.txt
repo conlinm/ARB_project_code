@@ -1,0 +1,78 @@
+Diagnosis
+
+Putting the three files together, this is a classic OHDSI FeatureExtraction covariate build blowing up on a large, shared enterprise CDM. A few things point to root cause:
+
+1. The killed query is one of several nearly-identical expensive queries, not a one-off.
+corhotMethodGenerated.sql builds #cov_4, the MeasurementRangeGroup covariate (analysis id 712) for the short-term window (-30 to 0 days, line 17-18). createDefaultCovariateSettings() (R script line 29) enables this same analysis for the medium-term (~180d) and long-term (~365d) windows too — each one a full join of #cohort_person against the entire OMOPV5.measurement table. So the DB isn't just running one heavy query, it's running this pattern 3x (and similarly for ConditionOccurrence, DrugExposure, Procedure, Observation, etc., which createDefaultCovariateSettings() also turns on by default). That's a lot of simultaneous full scans/joins against your biggest tables.
+
+2. #cohort_person is likely larger than it needs to be.
+R script lines 51-54: firstExposureOnly = FALSE, removeDuplicateSubjects = FALSE, restrictToCommonPeriod = FALSE, washoutPeriod = 0. Your comment on line 2 says dedup/TCO is already handled in the cohort table — if that's true, fine, but if a subject can have multiple exposure episodes in the cohort table, every episode becomes its own row_id and gets its own 30/180/365-day measurement lookup. That multiplies the join fan-out against measurement by the average number of episodes per person, directly inflating the intermediate result set that has to be grouped in tempdb.
+
+3. The email itself is a strong clue: "Open Transactions: 2" held for ~3 hours, 605 GB tempdb.
+That magnitude, combined with a long-held open transaction, is the signature of tempdb version-store bloat under Read Committed Snapshot Isolation (RCSI), which VA's shared CDW instances commonly run. Under RCSI, an open transaction forces SQL Server to retain row-version data for everything modified anywhere on the instance for as long as that transaction stays open — not just the rows your query touches. A 3-hour-open covariate-build transaction on a busy shared server can rack up hundreds of GB this way even if your own query plan is reasonably efficient. This means the fix isn't only "make the query cheaper" — it's "make the whole extraction finish fast enough that it never holds a transaction open for hours."
+
+4. addDescendantsToExclude = TRUE (R line 31) expands your exclusion list via concept_ancestor.
+For 13 ARB/non-ARB ingredient concepts this could pull in a large descendant set (#id_set_1), which is then used in a NOT IN subquery (SQL line 22). If that temp table isn't indexed, NOT IN against it becomes a nested-loop anti-join against every measurement row in the join, not a cheap hash lookup — another multiplier on top of an already-huge join.
+
+Recommended changes
+
+A. Shrink the covariate set (biggest lever, R script)
+
+- Replace createDefaultCovariateSettings() (line 29) with createCovariateSettings() and explicitly enable only the covariate domains/windows your PS model actually needs. In particular:
+  - Turn off useMeasurementRangeGroup* unless you specifically need lab-range-bucket covariates — this is the exact analysis that got killed, and it's one of the most expensive in FeatureExtraction on large lab tables.
+  - Pick one time window (e.g., long-term only, or short-term only) instead of short+medium+long. Three windows ≈ 3x the scans for marginal PS benefit.
+  - Drop domains you don't need for the ARB/RCCA analysis (e.g., DeviceExposure, Observation) rather than accepting the "everything" default.
+- Consider supplying includedCovariateConceptIds for the measurement domain if you know which labs are clinically relevant, instead of letting it enumerate every distinct measurement_concept_id in the VA CDW.
+
+B. Reduce #cohort_person size before covariates run (R script lines 51-54)
+
+- Confirm whether your cohort table can genuinely have multiple rows per subject. If yes, and you don't need per-episode covariates, set firstExposureOnly = TRUE and/or removeDuplicateSubjects to something other than FALSE — this cuts the join fan-out proportionally.
+- If you truly need every episode, that's fine, but know it's a direct cost multiplier and plan resources/runtime accordingly.
+
+C. Fix #id_set_1 cost (SQL/exclusion list)
+
+- Verify (via the DBA or an execution plan) that the temp table backing the excluded-concept-id set has an index/is small enough for SQL Server to broadcast/hash rather than nested-loop it. If addDescendantsToExclude = TRUE is pulling in thousands of descendant IDs, that's worth confirming isn't itself a bottleneck.
+
+D. Ask VINCI DBA team specifically about (per their offer in the email):
+
+- Whether OMOPV5.measurement has a covering/compound index on (person_id, measurement_date) and measurement_concept_id — without one, each of the 3 windowed joins is a large scan, not an index seek.
+- Whether the database runs under RCSI, and if so, whether there's a way to reduce version-store impact for long-running analytic transactions (e.g., a workload group, or advice on batching commits) rather than running everything as one multi-hour open transaction.
+- Getting the estimated execution plan for this query before rerunning, as they explicitly invited.
+
+E. Process
+
+- Run getDbCohortMethodData() first against a small pilot (e.g., a 1–5% subject sample or a single covariate domain at a time) to get a realistic sense of per-domain runtime/tempdb cost before running the full default settings against the full cohort. This lets you find the expensive domain(s) cheaply instead of discovering it via a 3-hour DBA-terminated job.
+- Once you've trimmed covariate settings, re-check the estimated plan/runtime before submitting the full run.
+
+Bottom line: the default "include everything, every window" covariate settings combined with a possibly-inflated #cohort_person are producing several multi-hour full-table joins against VA's enterprise measurement table, and the long-held transaction is likely amplifying tempdb usage further via version-store growth. Narrowing covariateSettings (drop unneeded domains/windows, especially MeasurementRangeGroup) and tightening the cohort-person row count are the highest-leverage, lowest-risk changes; the indexing/RCSI questions are worth raising with VINCI DBA in parallel.
+
+✻ Baked for 1m 48s
+
+※ recap: You're optimizing your ARB cohort method SQL/R pipeline to avoid another VINCI tempdb kill. I gave a set of fix recommendations; next step is deciding which covariate settings to trim first. (disable recaps in /config)
+
+## Optimized Script using createDefaultCovariateSettings()
+Created create_cohort_method_data_optimized.R. Your original create_cohort_method_data.R is untouched.
+
+Summary of what changed and why (all marked with OPTIMIZATION: comments in the file):
+
+1. Windows — programmatically disable all MediumTerm/ShortTerm covariate flags, keeping only the 365-day long-term window (cuts the join count against condition/drug/measurement tables by roughly 3x).
+2. MeasurementRangeGroup — disabled entirely (this was the exact analysis in corhotMethodGenerated.sql that got killed).
+3. Dedup safety net — firstExposureOnly = TRUE and removeDuplicateSubjects = "keep first" in both getDbCohortMethodData() and createStudyPopulation(), kept consistent between the two calls; this also resolves the old "or should this be FALSE" comment.
+4. Added non-code comments: a note near addDescendantsToExclude to ask VINCI DBA about indexing on #id_set_1, and a recommendation to pilot on a small subsample before a full run.
+
+Note: options 1 and 2 are implemented by inspecting names(covar_settings) rather than hardcoding flag names, so it's robust to the exact FeatureExtraction version's covariate-settings field list.
+
+## Optimized script using createCovariateSettings() (not using all possible covariates)
+Created create_cohort_method_data_explicit.R, built off create_cohort_method_data_optimized.R.
+
+What changed: the covariate settings block now calls createCovariateSettings() directly instead of createDefaultCovariateSettings() + post-hoc overrides, explicitly enabling only:
+- Demographics: gender, age group, race, ethnicity
+- Condition Occurrence + Condition Era (long-term)
+- Drug Exposure + Drug Era (long-term)
+- Measurement, plain presence/value (long-term) — not MeasurementRangeGroup
+
+Everything else (OPTIMIZATION 3 dedup settings, study population, PS creation) is unchanged from the optimized script.
+
+One thing worth verifying before you run it: I wrote the use* flag names (e.g. useDemographicsAgeGroup, useConditionEraLongTerm) from my knowledge of the FeatureExtraction package API, but exact flag names can shift slightly between package versions. Before running, it'd be worth doing ?createCovariateSettings (or args(createCovariateSettings)) in your R session to confirm those names match what's actually installed — if any are wrong, R will error immediately on that call (unused argument), not silently ignore it, so it should fail fast and be an easy fix.
+
+Suggested order of operations: try create_cohort_method_data_optimized.R first; if VINCI DBA terminates it again, fall back to create_cohort_method_data_explicit.R. If that one also gets killed, the next lever would be dropping Condition/Drug Era (keep only Occurrence/Exposure) or piloting on a subject subsample to isolate which single domain is still too expensive.

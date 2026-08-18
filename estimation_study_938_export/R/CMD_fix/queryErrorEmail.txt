@@ -1,0 +1,23 @@
+Hello,
+
+This is an automated email from the VINCI Database Administration Team. Please do not reply directly to this email. The process outlined below was either running directly under your personal account or was deemed to be an ETL or APP account related to a project that has you listed as the primary contact. This process has met one or more of the criteria which warrants termination per the VINCI guidelines.
+
+The process that was executing has used an excessive amount of TempDB space for an extended amount of time which was either preventing other processes from continuing or was holding resources longer than necessary. As such the process has been terminated to protect the overall shared resources on the server. Any modifications that may have been done inside an open transaction will be rolled back.
+Please fix the query and check the estimated query plan before attempting to rerun it to avoid further terminations. Our team (VINCIDBATEAM@va.gov) is available to provide limited high level advice in optimizing queries if needed. Depending on our availability, we may not be able to respond to requests immediately.
+
+QUERY DETAILS:
+Use the following information to fix your query:
+
+Termination Reason: Excessive Current TempDB Space Usage
+SQL Code: Full Query and Batch Text (click to view)
+SQL Server Instance: VHACDWRB03
+Client Host: VHACDWDWHAPP43
+Windows Account: VHA20\VHAPORCONLIM
+Program Name: Microsoft JDBC Driver for SQL Server
+Client Interface: Microsoft JDBC Driver 6.0
+Database: master
+Session ID: 137
+# of Open Transactions: 2
+Current TempDB Space Usage(GB): 605
+Duration (dd hh:mm:ss): 00 02:57:27
+Terminated on: August 13 2026 @ 22:30:03 CST
